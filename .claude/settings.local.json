@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebSearch",
+      "Bash(mcp__context7__resolve-library-id:*)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:docs.streamlit.io)",
+      "WebFetch(domain:platform.openai.com)"
+    ]
+  }
+}

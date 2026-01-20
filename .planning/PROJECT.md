@@ -42,18 +42,18 @@ Parse RFQs into structured data and compare options (suppliers and products) to 
 
 ## Constraints
 
-- **Tech stack**: Streamlit (frontend), Python 3.10+ (backend), Supabase with pgvector (database), OpenAI API (parsing + embeddings) — user-specified
-- **Deployment**: Local/simple deployment acceptable for solo use
+- **Tech stack**: Streamlit (frontend), Python 3.10+ (backend), Local PostgreSQL with pgvector (database), Gemini 2.0 Flash (parsing + embeddings) — updated for "Postgres + Gemini"
+- **Deployment**: Local deployment (Python env + Local Postgres)
 - **Data**: Starting from zero — system must be usable without historical data
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Streamlit for UI | Rapid development, Python-native, good enough for solo tool | — Pending |
-| Supabase + pgvector | Managed PostgreSQL with vector search built-in, no infra overhead | — Pending |
-| OpenAI for parsing & embeddings | Proven quality for text extraction and semantic search | — Pending |
-| Manual entry fallback | AI parsing may fail on unusual RFQ formats, need reliability | — Pending |
+| Streamlit for UI | Rapid development, Python-native, good enough for solo tool | — Target |
+| Local Postgres + pgvector | Robust, industry standard for vector storage | — Target |
+| Gemini 2.0 Flash | Fast, high-quality parsing/embeddings, generous free tier | — Target |
+| Manual entry fallback | AI parsing may fail on unusual RFQ formats, need reliability | — Target |
 
 ---
 *Last updated: 2026-01-20 after initialization*
