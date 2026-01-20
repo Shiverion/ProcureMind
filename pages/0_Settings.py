@@ -45,15 +45,63 @@ with col2:
 
 st.divider()
 
+# --- DATABASE CONNECTION ---
+st.subheader("🗄️ Database Connection")
+st.write("Connect to your own PostgreSQL database (Cloud or Local).")
+
+current_db = st.session_state.get("DATABASE_URL", "")
+
+# Masking logic could be added here, but usually DB URLs are long and complex.
+# We'll keep it as a password field to be safe.
+
+db_url_input = st.text_input(
+    "Enter Database Connection String (URI)",
+    value=current_db,
+    type="password",
+    placeholder="postgresql://user:password@host:port/dbname",
+    help="Example: postgresql://postgres:password@db.supabase.co:5432/postgres"
+)
+
+col_db1, col_db2 = st.columns([1, 4])
+with col_db1:
+    if st.button("Connect DB", type="primary"):
+        if db_url_input.startswith("postgres"):
+            st.session_state["DATABASE_URL"] = db_url_input
+            # Clear cached engine to force reconnection
+            st.cache_resource.clear()
+            st.success("Database URL saved! Reconnecting...")
+            st.rerun()
+        else:
+            st.error("Invalid URL. Must start with 'postgres://' or 'postgresql://'")
+
+with col_db2:
+    if st.button("Reset DB"):
+        if "DATABASE_URL" in st.session_state:
+            del st.session_state["DATABASE_URL"]
+            st.cache_resource.clear()
+            st.rerun()
+
+st.divider()
+
 # --- STATUS INDICATOR ---
-if "GOOGLE_API_KEY" in st.session_state:
-    st.success("✅ AI Service is Ready (Using Session Key)")
-elif os.getenv("GOOGLE_API_KEY"):
-    st.info("✅ AI Service is Ready (Using Environment Variable)")
-else:
-    st.warning("⚠️ AI Service is NOT Configured. Please enter a key.")
+col_stat1, col_stat2 = st.columns(2)
+
+with col_stat1:
+    if "GOOGLE_API_KEY" in st.session_state:
+        st.success("✅ AI Service: Ready (Session)")
+    elif os.getenv("GOOGLE_API_KEY") or (st.secrets.get("GOOGLE_API_KEY")):
+        st.info("✅ AI Service: Ready (System)")
+    else:
+        st.warning("⚠️ AI Service: Not Configured")
+
+with col_stat2:
+    if "DATABASE_URL" in st.session_state:
+        st.success("✅ Database: Ready (Session)")
+    elif os.getenv("DATABASE_URL") or (st.secrets.get("postgres")):
+        st.info("✅ Database: Ready (System)")
+    else:
+        st.warning("⚠️ Database: Using Temporary Local SQLite")
 
 st.info("""
-**Note:** Your API key is stored only in your browser's temporary session. 
-It is not saved to our database. If you refresh the page, you may need to enter it again.
+**Note:** Start fresh by clearing these settings. Your secrets are stored temporarily in your browser session.
 """)

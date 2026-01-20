@@ -10,41 +10,45 @@ from pgvector.sqlalchemy import Vector
 load_dotenv()
 
 # --- DATABASE CONNECTION LOGIC ---
-# Prioritize Streamlit Secrets (Cloud), fallback to .env (Local)
 def get_database_url():
-    # 1. Check Streamlit Secrets
+    """
+    Retrieves DB URL with priority: Session > Secrets > Env > Fallback.
+    """
+    # 1. Check Session State (Dynamic Client-Side)
+    if st.session_state.get("DATABASE_URL"):
+        return st.session_state["DATABASE_URL"]
+
+    # 2. Check Streamlit Secrets
     try:
-        # Most cloud providers use "DATABASE_URL" or "postgres" as key
         if "DATABASE_URL" in st.secrets:
             return st.secrets["DATABASE_URL"]
         if "postgres" in st.secrets and "url" in st.secrets["postgres"]:
             return st.secrets["postgres"]["url"]
-    except FileNotFoundError:
-        pass # No secrets file found
     except Exception:
-        pass # Secrets accessed outside streamlit context
-        
-    # 2. Check Environment Variable
+        pass 
+
+    # 3. Check Environment Variable
     env_url = os.getenv("DATABASE_URL")
     if env_url:
         return env_url
         
-    return None
+    # 4. Fallback (Local)
+    return "sqlite:///./procuremind.db"
 
-DATABASE_URL = get_database_url()
-
-if not DATABASE_URL:
-    # Fail-safe: Use local SQLite so app doesn't crash on Cloud without secrets
-    # Note: On Streamlit Cloud without persistence, this will reset on reboot.
-    DATABASE_URL = "sqlite:///./procuremind.db"
+@st.cache_resource
+def get_engine(url_override=None):
+    """
+    Creates and caches the SQLAlchemy engine. 
+    Clearing cache (st.cache_resource.clear()) forces reconnection.
+    """
+    db_url = url_override if url_override else get_database_url()
     
-# Handle Postgres 'postgres://' vs 'postgresql://' for SQLAlchemy
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+        
+    return create_engine(db_url)
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
+# Legacy global Base for models
 Base = declarative_base()
 
 class Supplier(Base):
@@ -83,9 +87,24 @@ class RFQ(Base):
     parsed_json = Column(JSON)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
+# --- DYNAMIC SESSION MANAGEMENT ---
+# To support dynamic engines, we must not rely on a global SessionLocal factory (which binds to one engine).
+# Instead, we create the session factory on the fly or scope it to the current cached engine.
+
 def get_db():
+    engine = get_engine()
+    # Create tables if not exist (Lazy Init)
+    # Ideally should be done once, but declarative_base metadata binding needs engine
+    # We can try/except this or rely on st.cache_resource side-effects
+    # For MVP safety, we just bind and make session
+    
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+        
+# Helper for non-generator usage (e.g. init script)
+engine = get_engine() # This initiates the default/cached engine globally for imports
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
