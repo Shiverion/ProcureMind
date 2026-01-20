@@ -54,19 +54,23 @@ ProcureMind is ready for 1-click deployment on Streamlit Community Cloud.
 3.  **Database Configuration**:
     *   By default, it will use a local SQLite file for testing.
     *   For production, add your PostgreSQL credentials to the **Streamlit Secrets**:
-    ```toml
-    [postgres]
-    url = "postgresql://user:password@host:port/dbname"
-    ```
     > **Note**: Your Postgres database MUST have the `pgvector` extension enabled.
-    > Run this SQL command in your database query tool before deploying:
-    > ```sql
-    > CREATE EXTENSION IF NOT EXISTS vector;
-    > ```
+    >
+    > **How to set up a free Cloud DB (Supabase):**
+    > 1.  Go to [Supabase](https://supabase.com) and create a new project.
+    > 2.  Go to **SQL Editor** and run: `CREATE EXTENSION IF NOT EXISTS vector;`
+    > 3.  Go to **Project Settings -> Database -> Connection String (URI)**.
+    > 4.  Copy the connection string (it looks like `postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`).
+    > 5.  Add this to your Streamlit Secrets.
 
-4.  **API Keys**:
-    *   Users will enter their own Gemini keys via the UI (Session State).
-    *   Alternatively, you can provide a default key in secrets: `GOOGLE_API_KEY = "AIza..."`.
+    > 5.  Add this to your Streamlit Secrets.
+
+4.  **Shared API Key (Sponsor Mode)**:
+    *   If you want to allow others to use the app **without** entering their own key (using your quota), add your key to secrets:
+    ```toml
+    GOOGLE_API_KEY = "AIzaSy..."
+    ```
+    *   If this is set, the "Settings" page becomes optional for users.
 
 ## 🛠️ Tech Stack
 
