@@ -25,14 +25,18 @@ def get_database_url():
         pass # Secrets accessed outside streamlit context
         
     # 2. Check Environment Variable
-    return os.getenv("DATABASE_URL")
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        return env_url
+        
+    return None
 
 DATABASE_URL = get_database_url()
 
 if not DATABASE_URL:
-    # Fallback for very first local run without .env
-    print("Warning: No DATABASE_URL found. Using local sqlite for testing if needed.")
-    # For now, let it crash if missing so user knows to config
+    # Fail-safe: Use local SQLite so app doesn't crash on Cloud without secrets
+    # Note: On Streamlit Cloud without persistence, this will reset on reboot.
+    DATABASE_URL = "sqlite:///./procuremind.db"
     
 # Handle Postgres 'postgres://' vs 'postgresql://' for SQLAlchemy
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
