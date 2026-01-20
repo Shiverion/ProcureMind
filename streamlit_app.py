@@ -8,6 +8,15 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- DATABASE INIT ---
+# Ensure tables exist (crucial for Cloud deployment)
+from logic.database import engine, Base
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    # This might fail if pgvector extension isn't installed on fresh Postgres
+    st.error(f"Database Init Error: {e}")
+
 st.title("🧠 ProcureMind")
 st.markdown("### Transform messy RFQs into structured, comparable data.")
 

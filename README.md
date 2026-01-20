@@ -58,6 +58,12 @@ ProcureMind is ready for 1-click deployment on Streamlit Community Cloud.
     [postgres]
     url = "postgresql://user:password@host:port/dbname"
     ```
+    > **Note**: Your Postgres database MUST have the `pgvector` extension enabled.
+    > Run this SQL command in your database query tool before deploying:
+    > ```sql
+    > CREATE EXTENSION IF NOT EXISTS vector;
+    > ```
+
 4.  **API Keys**:
     *   Users will enter their own Gemini keys via the UI (Session State).
     *   Alternatively, you can provide a default key in secrets: `GOOGLE_API_KEY = "AIza..."`.
