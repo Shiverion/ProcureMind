@@ -1,0 +1,6 @@
+{
+  "mode": "yolo",
+  "depth": "comprehensive",
+  "parallelization": true,
+  "notes": "User executes plans via Cursor agent"
+}
