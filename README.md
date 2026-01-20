@@ -26,7 +26,7 @@ This application is designed as a **Wrapper**, meaning users can bring their own
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/procuremind.git
+    git clone https://github.com/Shiverion/procuremind.git
     cd procuremind
     ```
 
