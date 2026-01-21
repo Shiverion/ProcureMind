@@ -5,5 +5,5 @@ psycopg2-binary
 python-dotenv
 google-generativeai
 pgvector
-supabase
+supabase==2.27.2
 tabulate
