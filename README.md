@@ -76,7 +76,7 @@ ProcureMind is ready for 1-click deployment on Streamlit Community Cloud.
 
 *   **Frontend**: Streamlit
 *   **Database**: Supabase (via REST API)
-*   **AI**: Google Gemini 2.0 Flash (via `google-generativeai`)
+*   **AI**: Google Gemini 2.5 Flash (via `google-generativeai`)
 
 ## 📄 License
 
