@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Use gemini-2.0-flash
-PARSER_MODEL = "gemini-2.0-flash"
+# Use gemini-2.5-flash
+PARSER_MODEL = "gemini-2.5-flash"
 EMBEDDING_MODEL = "models/text-embedding-004"
 
 def get_api_key():

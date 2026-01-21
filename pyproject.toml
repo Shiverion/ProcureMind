@@ -11,4 +11,5 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "sqlalchemy>=2.0.45",
     "streamlit>=1.53.0",
+    "supabase==2.27.2",
 ]
