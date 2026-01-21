@@ -45,41 +45,49 @@ with col2:
 
 st.divider()
 
-# --- DATABASE CONNECTION ---
-st.subheader("🗄️ Database Connection")
-st.write("Connect to your own PostgreSQL database (Cloud or Local).")
+# --- SUPABASE CONNECTION ---
+st.subheader("☁️ Supabase Connection (REST API)")
+st.write("Connect to your Supabase project using the API URL and Anon Key.")
 
-current_db = st.session_state.get("DATABASE_URL", "")
+current_url = st.session_state.get("SUPABASE_URL", os.getenv("SUPABASE_URL", ""))
+current_key = st.session_state.get("SUPABASE_ANON_KEY", os.getenv("SUPABASE_ANON_KEY", ""))
 
-# Masking logic could be added here, but usually DB URLs are long and complex.
-# We'll keep it as a password field to be safe.
+supa_url_input = st.text_input(
+    "Supabase Project URL",
+    value=current_url,
+    placeholder="https://your-project.supabase.co",
+    help="Find this in Project Settings -> API"
+)
 
-db_url_input = st.text_input(
-    "Enter Database Connection String (URI)",
-    value=current_db,
+supa_key_input = st.text_input(
+    "Supabase Anon Key",
+    value=current_key,
     type="password",
-    placeholder="postgresql://user:password@host:port/dbname",
-    help="Example: postgresql://postgres:password@db.supabase.co:5432/postgres"
+    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    help="Find this in Project Settings -> API"
 )
 
 col_db1, col_db2 = st.columns([1, 4])
 with col_db1:
-    if st.button("Connect DB", type="primary"):
-        if db_url_input.startswith("postgres"):
-            st.session_state["DATABASE_URL"] = db_url_input
-            # Clear cached engine to force reconnection
+    if st.button("Connect Supabase", type="primary"):
+        if supa_url_input.startswith("https://") and len(supa_key_input) > 20:
+            st.session_state["SUPABASE_URL"] = supa_url_input
+            st.session_state["SUPABASE_ANON_KEY"] = supa_key_input
+            # Clear cached client to force reconnection
             st.cache_resource.clear()
-            st.success("Database URL saved! Reconnecting...")
+            st.success("Supabase credentials saved!")
             st.rerun()
         else:
-            st.error("Invalid URL. Must start with 'postgres://' or 'postgresql://'")
+            st.error("Invalid URL or Key format.")
 
 with col_db2:
-    if st.button("Reset DB"):
-        if "DATABASE_URL" in st.session_state:
-            del st.session_state["DATABASE_URL"]
-            st.cache_resource.clear()
-            st.rerun()
+    if st.button("Reset Connection"):
+        if "SUPABASE_URL" in st.session_state:
+            del st.session_state["SUPABASE_URL"]
+        if "SUPABASE_ANON_KEY" in st.session_state:
+            del st.session_state["SUPABASE_ANON_KEY"]
+        st.cache_resource.clear()
+        st.rerun()
 
 st.divider()
 
@@ -95,12 +103,14 @@ with col_stat1:
         st.warning("⚠️ AI Service: Not Configured")
 
 with col_stat2:
-    if "DATABASE_URL" in st.session_state:
-        st.success("✅ Database: Ready (Session)")
-    elif os.getenv("DATABASE_URL") or (st.secrets.get("postgres")):
-        st.info("✅ Database: Ready (System)")
+    if "SUPABASE_URL" in st.session_state and "SUPABASE_ANON_KEY" in st.session_state:
+        st.success("✅ Supabase: Ready (Session)")
+    elif os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_ANON_KEY"):
+        st.info("✅ Supabase: Ready (Environment)")
+    elif "SUPABASE_URL" in st.secrets and "SUPABASE_ANON_KEY" in st.secrets:
+        st.info("✅ Supabase: Ready (Secrets)")
     else:
-        st.warning("⚠️ Database: Using Temporary Local SQLite")
+        st.warning("⚠️ Supabase: Not Configured")
 
 st.info("""
 **Note:** Start fresh by clearing these settings. Your secrets are stored temporarily in your browser session.

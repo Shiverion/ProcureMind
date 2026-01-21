@@ -53,15 +53,15 @@ ProcureMind is ready for 1-click deployment on Streamlit Community Cloud.
 2.  **Deploy on Streamlit Cloud** and connect your repository.
 3.  **Database Configuration**:
     *   By default, it will use a local SQLite file for testing.
-    *   For production, add your PostgreSQL credentials to the **Streamlit Secrets**:
-    > **Note**: Your Postgres database MUST have the `pgvector` extension enabled.
-    >
-    > **How to set up a free Cloud DB (Supabase):**
+    *   For production, add your **Supabase credentials** to the **Streamlit Secrets**:
+    
+    > **How to set up Supabase REST:**
     > 1.  Go to [Supabase](https://supabase.com) and create a new project.
-    > 2.  Go to **SQL Editor** and run: `CREATE EXTENSION IF NOT EXISTS vector;`
-    > 3.  Go to **Project Settings -> Database -> Connection String (URI)**.
-    > 4.  Copy the connection string (it looks like `postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`).
-    > 5.  Add this to your Streamlit Secrets.
+    > 2.  Go to **SQL Editor** and run the schema setup (see `schema.sql`).
+    > 3.  **IMPORTANT**: Run the semantic search helper function (see `README.md` or `walkthrough.md`).
+    > 4.  Go to **Project Settings -> API**.
+    > 5.  Copy your **Project URL** and **anon public** key.
+    > 6.  Add them to your Streamlit Secrets as `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 
     > 5.  Add this to your Streamlit Secrets.
 
@@ -75,8 +75,7 @@ ProcureMind is ready for 1-click deployment on Streamlit Community Cloud.
 ## 🛠️ Tech Stack
 
 *   **Frontend**: Streamlit
-*   **Backend**: Python, SQLAlchemy
-*   **Database**: PostgreSQL (pgvector) or SQLite
+*   **Database**: Supabase (via REST API)
 *   **AI**: Google Gemini 2.0 Flash (via `google-generativeai`)
 
 ## 📄 License

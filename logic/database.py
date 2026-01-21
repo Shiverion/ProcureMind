@@ -1,110 +1,74 @@
 import os
-from dotenv import load_dotenv
 import streamlit as st
-from sqlalchemy import Column, Integer, String, Text, DECIMAL, Date, TIMESTAMP, JSON, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func
-from pgvector.sqlalchemy import Vector
+from supabase import create_client, Client
+from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- DATABASE CONNECTION LOGIC ---
-def get_database_url():
+# --- SUPABASE CONFIGURATION ---
+
+def get_supabase_credentials():
     """
-    Retrieves DB URL with priority: Session > Secrets > Env > Fallback.
+    Retrieves Supabase URL and Anon Key with priority: Session > Secrets > Env.
     """
     # 1. Check Session State (Dynamic Client-Side)
-    if st.session_state.get("DATABASE_URL"):
-        return st.session_state["DATABASE_URL"]
+    session_url = st.session_state.get("SUPABASE_URL")
+    session_key = st.session_state.get("SUPABASE_ANON_KEY")
+    
+    if session_url and session_key:
+        return session_url, session_key
 
     # 2. Check Streamlit Secrets
     try:
-        if "DATABASE_URL" in st.secrets:
-            return st.secrets["DATABASE_URL"]
-        if "postgres" in st.secrets and "url" in st.secrets["postgres"]:
-            return st.secrets["postgres"]["url"]
+        if "SUPABASE_URL" in st.secrets and "SUPABASE_ANON_KEY" in st.secrets:
+            return st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_ANON_KEY"]
     except Exception:
-        pass 
+        pass
 
-    # 3. Check Environment Variable
-    env_url = os.getenv("DATABASE_URL")
-    if env_url:
-        return env_url
+    # 3. Check Environment Variables
+    env_url = os.getenv("SUPABASE_URL")
+    env_key = os.getenv("SUPABASE_ANON_KEY")
+    
+    if env_url and env_key:
+        return env_url, env_key
         
-    # 4. Fallback (Local)
-    return "sqlite:///./procuremind.db"
+    return None, None
 
 @st.cache_resource
-def get_engine(url_override=None):
+def get_supabase() -> Client:
     """
-    Creates and caches the SQLAlchemy engine. 
-    Clearing cache (st.cache_resource.clear()) forces reconnection.
+    Creates and caches the Supabase client.
+    Clearing cache (st.cache_resource.clear()) forces re-initialization.
     """
-    db_url = url_override if url_override else get_database_url()
+    url, key = get_supabase_credentials()
     
-    if db_url and db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    if not url or not key:
+        # If credentials are missing, we might still want to return a dummy or raise warning
+        # For now, let's return None and handle it in pages
+        return None
         
-    return create_engine(db_url)
+    return create_client(url, key)
 
-# Legacy global Base for models
-Base = declarative_base()
-
-class Supplier(Base):
-    __tablename__ = "suppliers"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    contact_info = Column(Text)
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-
-class Product(Base):
-    __tablename__ = "products"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    description = Column(Text)
-    specs = Column(Text)
-    embedding = Column(Vector(768)) # Gemini embedding size
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-
-class Quote(Base):
-    __tablename__ = "quotes"
-    id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer) # Linked to Product.id
-    supplier_id = Column(Integer) # Linked to Supplier.id
-    price = Column(DECIMAL(12, 2), nullable=False)
-    currency = Column(String, default="USD")
-    uom = Column(Text)
-    source_url = Column(Text)
-    note = Column(Text)
-    quote_date = Column(Date, server_default=func.current_date())
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-
-class RFQ(Base):
-    __tablename__ = "rfqs"
-    id = Column(Integer, primary_key=True, index=True)
-    raw_text = Column(String, nullable=False)
-    parsed_json = Column(JSON)
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-
-# --- DYNAMIC SESSION MANAGEMENT ---
-# To support dynamic engines, we must not rely on a global SessionLocal factory (which binds to one engine).
-# Instead, we create the session factory on the fly or scope it to the current cached engine.
+# --- UTILS / MODELS REPRESENTATION ---
+# While we don't use SQLAlchemy ORM for REST, these names help maintain alignment
+TABLE_SUPPLIERS = "suppliers"
+TABLE_PRODUCTS = "products"
+TABLE_QUOTES = "quotes"
+TABLE_RFQS = "rfqs"
 
 def get_db():
-    engine = get_engine()
-    # Create tables if not exist (Lazy Init)
-    # Ideally should be done once, but declarative_base metadata binding needs engine
-    # We can try/except this or rely on st.cache_resource side-effects
-    # For MVP safety, we just bind and make session
-    
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        
-# Helper for non-generator usage (e.g. init script)
-engine = get_engine() # This initiates the default/cached engine globally for imports
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    """
+    Compatibility helper for pages that used 'with get_db() as db'.
+    Since Supabase client is persistent and doesn't use sessions in the same way,
+    we just return the client.
+    """
+    client = get_supabase()
+    if client:
+        yield client
+    else:
+        # Fallback for pages to handle None
+        yield None
+
+# --- LEGACY / FALLBACK (Optional) ---
+# If the user still wants local SQLite, we'd need to keep SQLAlchemy code here.
+# But since the goal is to use RESTful API, we prioritize the Supabase client.

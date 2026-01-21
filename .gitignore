@@ -32,3 +32,6 @@ PROJECT.md
 
 # Tools
 .claude/
+
+# Data Dumps
+*.sql
